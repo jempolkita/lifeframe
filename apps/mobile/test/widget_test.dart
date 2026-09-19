@@ -15,8 +15,8 @@ void main() {
     await tester.pumpWidget(const LifeframeApp());
 
     // Verify that the navigation destinations exist.
-    expect(find.text('Gallery'), findsOneWidget);
-    expect(find.text('Sync'), findsOneWidget);
+    expect(find.text('Photos'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
 
     // Let discovery timers settle
     await tester.pump(const Duration(seconds: 5));

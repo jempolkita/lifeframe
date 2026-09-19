@@ -201,7 +201,22 @@ class _SyncPageState extends State<SyncPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('LAN Synchronization'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/lifeframe-logo.png',
+                width: 26,
+                height: 26,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('LAN Synchronization'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_link),

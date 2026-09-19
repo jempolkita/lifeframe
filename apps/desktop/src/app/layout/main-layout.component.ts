@@ -42,9 +42,11 @@ import { InputIcon } from 'primeng/inputicon';
       <header class="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 z-20 select-none transition-colors duration-200">
         <!-- Brand / Logo -->
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
-            <i class="pi pi-camera text-white text-base"></i>
-          </div>
+          <img 
+            src="lifeframe-logo.png" 
+            alt="Lifeframe Logo" 
+            class="w-8 h-8 rounded-lg object-contain shadow-md shadow-indigo-500/20"
+          />
           <div>
             <h1 class="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">Lifeframe</h1>
             <p class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Local &amp; LAN Sync</p>

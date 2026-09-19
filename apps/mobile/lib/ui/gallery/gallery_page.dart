@@ -59,7 +59,22 @@ class GalleryPageState extends State<GalleryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lifeframe Gallery'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/lifeframe-logo.png',
+                width: 26,
+                height: 26,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('Lifeframe Gallery'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

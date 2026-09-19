@@ -1,3 +1,7 @@
+<div align="center">
+
+<img src="assets/lifeframe-logo.png" alt="Lifeframe Logo" width="128" height="128" />
+
 # Lifeframe
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -5,6 +9,10 @@
 [![Angular v21](https://img.shields.io/badge/Angular-v21-red?logo=angular)](https://angular.dev/)
 [![Flutter](https://img.shields.io/badge/Flutter-v3.29+-blue?logo=flutter)](https://flutter.dev/)
 [![OpenAPI 3.0](https://img.shields.io/badge/OpenAPI-3.0.3-green?logo=openapi-initiative)](schemas/openapi.json)
+
+<p><strong>Open-source, privacy-first, folder-based photo management and peer-to-peer LAN synchronization for Desktop and Mobile.</strong></p>
+
+</div>
 
 **Lifeframe** is an open-source, privacy-first, folder-based photo management and peer-to-peer local network (LAN) synchronization system for **Desktop** and **Mobile**.
 
