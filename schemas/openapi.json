@@ -1,0 +1,660 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Lifeframe Sync & Media API",
+    "version": "1.0.0",
+    "description": "Single Source of Truth for LAN Sync, Media Streaming, and Metadata Exchange between Desktop and Mobile clients."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Desktop Host"
+    }
+  ],
+  "paths": {
+    "/api/manifest": {
+      "get": {
+        "operationId": "getManifest",
+        "summary": "Get Sync Manifest",
+        "description": "Returns the current synchronization manifest including indexed photos, albums, and total sizes. Supports incremental sync via 'since' parameter.",
+        "tags": ["Sync"],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "ISO-8601 timestamp to retrieve only items updated since this time",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current sync manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncManifest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/image": {
+      "get": {
+        "operationId": "getImage",
+        "summary": "Get Photo or Thumbnail Image Stream",
+        "description": "Retrieves binary image data for a photo, either full-resolution or resized thumbnail.",
+        "tags": ["Media"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Unique photo ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "description": "Relative file path of the image",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "thumbnail",
+            "in": "query",
+            "description": "Whether to return an optimized thumbnail instead of original image",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "max_width",
+            "in": "query",
+            "description": "Optional max width constraint for resizing",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "max_height",
+            "in": "query",
+            "description": "Optional max height constraint for resizing",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary image content",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Image not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload": {
+      "post": {
+        "operationId": "uploadPhoto",
+        "summary": "Upload Photo",
+        "description": "Uploads a photo file from mobile client to desktop server storage.",
+        "tags": ["Media"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The raw image binary file"
+                  },
+                  "relative_path": {
+                    "type": "string",
+                    "description": "Relative destination path (e.g., 'Camera/2026-09/IMG_1024.jpg')"
+                  },
+                  "album_id": {
+                    "type": "string",
+                    "description": "Target album ID"
+                  },
+                  "date_taken": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Capture timestamp if known"
+                  },
+                  "hash_sha256": {
+                    "type": "string",
+                    "description": "Client-calculated SHA256 checksum for validation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Upload successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid upload request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/device-status": {
+      "post": {
+        "operationId": "reportDeviceStatus",
+        "summary": "Report Device Status / Heartbeat",
+        "description": "Reports device battery, storage, and synchronization state to the desktop coordinator.",
+        "tags": ["Device"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceStatus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status acknowledged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/people": {
+      "get": {
+        "operationId": "getPeople",
+        "summary": "Get People List",
+        "description": "Returns list of recognized or tagged people for facial recognition clustering",
+        "tags": ["People"],
+        "responses": {
+          "200": {
+            "description": "List of recognized people",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Person"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BoundingBox": {
+        "type": "object",
+        "description": "Normalized coordinates (0.0 - 1.0) compatible with YOLO, ONNX, and digiKam tagRegion",
+        "required": ["x", "y", "width", "height"],
+        "properties": {
+          "x": {
+            "type": "number",
+            "format": "float",
+            "description": "Top-left X coordinate normalized (0.0 to 1.0)",
+            "example": 0.25
+          },
+          "y": {
+            "type": "number",
+            "format": "float",
+            "description": "Top-left Y coordinate normalized (0.0 to 1.0)",
+            "example": 0.30
+          },
+          "width": {
+            "type": "number",
+            "format": "float",
+            "description": "Bounding box width normalized (0.0 to 1.0)",
+            "example": 0.15
+          },
+          "height": {
+            "type": "number",
+            "format": "float",
+            "description": "Bounding box height normalized (0.0 to 1.0)",
+            "example": 0.20
+          }
+        }
+      },
+      "FaceTag": {
+        "type": "object",
+        "description": "Detected or tagged face region ready for ONNX/YOLO and digiKam compatibility",
+        "required": ["id", "box"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique face detection ID"
+          },
+          "person_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID of identified person if assigned"
+          },
+          "person_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Recognized or labeled person name"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Detection confidence score (0.0 to 1.0)"
+          },
+          "is_confirmed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether verified by user or auto-detected by AI"
+          },
+          "box": {
+            "$ref": "#/components/schemas/BoundingBox"
+          }
+        }
+      },
+      "Person": {
+        "type": "object",
+        "description": "Identified person entity for facial clustering",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique person identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Person full name or label"
+          },
+          "thumbnail_face_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Face tag ID used as avatar"
+          },
+          "photo_count": {
+            "type": "integer",
+            "default": 0,
+            "description": "Number of photos tagged with this person"
+          }
+        }
+      },
+      "GeoLocation": {
+        "type": "object",
+        "description": "GPS coordinate information",
+        "required": ["latitude", "longitude"],
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "altitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "ExifData": {
+        "type": "object",
+        "description": "Parsed photographic technical metadata",
+        "properties": {
+          "make": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "lens": {
+            "type": "string",
+            "nullable": true
+          },
+          "focal_length": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "f_number": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "iso": {
+            "type": "integer",
+            "nullable": true
+          },
+          "exposure_time": {
+            "type": "string",
+            "nullable": true,
+            "description": "Formatted shutter speed e.g. 1/250s"
+          }
+        }
+      },
+      "Photo": {
+        "type": "object",
+        "required": [
+          "id",
+          "filename",
+          "relative_path",
+          "size_bytes",
+          "hash_sha256",
+          "mime_type",
+          "date_modified"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique UUID or identifier"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original filename e.g. IMG_2026.JPG"
+          },
+          "relative_path": {
+            "type": "string",
+            "description": "Relative file path from root storage"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "File size in bytes"
+          },
+          "hash_sha256": {
+            "type": "string",
+            "description": "SHA-256 hash checksum for integrity & deduplication"
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type e.g. image/jpeg, image/png, image/heic"
+          },
+          "width": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Image width in pixels"
+          },
+          "height": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Image height in pixels"
+          },
+          "rating": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5,
+            "default": 0,
+            "description": "Star rating (0-5, matching digiKam rating)"
+          },
+          "date_taken": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date captured from EXIF"
+          },
+          "date_modified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "File modification timestamp"
+          },
+          "album_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Parent album ID if assigned"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Keywords and general tags"
+          },
+          "faces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FaceTag"
+            },
+            "description": "Detected faces and regions"
+          },
+          "gps": {
+            "$ref": "#/components/schemas/GeoLocation"
+          },
+          "exif": {
+            "$ref": "#/components/schemas/ExifData"
+          }
+        }
+      },
+      "Album": {
+        "type": "object",
+        "required": ["id", "name", "relative_path", "photo_count"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "relative_path": {
+            "type": "string"
+          },
+          "photo_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "SyncManifest": {
+        "type": "object",
+        "required": [
+          "server_id",
+          "server_name",
+          "generated_at",
+          "total_photos",
+          "total_size_bytes",
+          "photos",
+          "albums"
+        ],
+        "properties": {
+          "server_id": {
+            "type": "string"
+          },
+          "server_name": {
+            "type": "string"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total_photos": {
+            "type": "integer"
+          },
+          "total_size_bytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Photo"
+            }
+          },
+          "albums": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Album"
+            }
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          }
+        }
+      },
+      "DeviceStatus": {
+        "type": "object",
+        "required": [
+          "device_id",
+          "device_name",
+          "device_type",
+          "client_version"
+        ],
+        "properties": {
+          "device_id": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          },
+          "device_type": {
+            "type": "string",
+            "enum": ["desktop", "mobile_android", "mobile_ios", "unknown"]
+          },
+          "battery_percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true
+          },
+          "is_charging": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "storage_free_bytes": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "storage_total_bytes": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "client_version": {
+            "type": "string"
+          },
+          "last_sync_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sync_status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Current sync state (e.g. idle, syncing, paused, error)"
+          }
+        }
+      },
+      "DeviceStatusResponse": {
+        "type": "object",
+        "required": ["success", "message", "server_time"],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "server_time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UploadResponse": {
+        "type": "object",
+        "required": ["success", "photo_id", "relative_path", "message"],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "photo_id": {
+            "type": "string"
+          },
+          "relative_path": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      }
+    }
+  }
+}

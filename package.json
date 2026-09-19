@@ -1,0 +1,17 @@
+{
+  "name": "lifeframe-root",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lifeframe monorepo root",
+  "scripts": {
+    "generate": "npm run generate:angular && npm run generate:flutter",
+    "generate:angular": "openapi-generator-cli generate -i schemas/openapi.json -g typescript-angular -o apps/desktop/src/app/core/api --additional-properties=ngVersion=19,stringEnums=true,fileNaming=kebab-case",
+    "generate:flutter": "openapi-generator-cli generate -i schemas/openapi.json -g dart -o packages/lifeframe_api --additional-properties=pubName=lifeframe_api",
+    "desktop:dev": "npm --prefix apps/desktop run tauri dev",
+    "desktop:start": "npm --prefix apps/desktop start",
+    "desktop:build": "npm --prefix apps/desktop run build"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.16.3"
+  }
+}
